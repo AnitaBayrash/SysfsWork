@@ -11,23 +11,30 @@ MODULE_DESCRIPTION("Timer Module");
 
 static struct kobject *timer_kobject;
 static struct timer_list timer;
+
 int timer_period = 0;
-
-static ssize_t timer_show(struct kobject *kobj, struct kobj_attribute *attr, char *buffer)
-{
-        return sprintf(buffer, "%d\n", timer_period);
-}
-
-static ssize_t timer_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buffer, size_t count)
-{
-        sscanf(buffer, "%d", &timer_period);
-	return count;
-}
 
 void timer_callback(unsigned long argument)
 {
 	printk(KERN_INFO "Hello, world!\n");
     	mod_timer(&timer, jiffies + msecs_to_jiffies(timer_period)); 
+}
+
+static ssize_t timer_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+        return sprintf(buf, "%d\n", timer_period);
+}
+
+static ssize_t timer_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+        sscanf(buf, "%d", &timer_period);
+
+       	if (timer_period == 0)
+		del_timer_sync(&timer);
+	else
+		mod_timer(&timer, jiffies + msecs_to_jiffies(timer_period)); 
+
+        return count;
 }
 
 static struct kobj_attribute timer_attribute = __ATTR(timer_period, 0666, timer_show, timer_store);
@@ -57,7 +64,7 @@ module_init(timer_initialize);
 static void __exit timer_exit(void)
 {
 	del_timer_sync(&timer);
-	kobject_put(timer_kobject);
+        kobject_put(timer_kobject);
 }
 
 module_exit(timer_exit);
