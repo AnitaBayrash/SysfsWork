@@ -30,7 +30,7 @@ static ssize_t timer_store(struct kobject *kobj, struct kobj_attribute *attr, co
         sscanf(buf, "%d", &timer_period);
 
        	if (timer_period == 0)
-		del_timer_sync(&timer);
+		del_timer(&timer);
 	else
 		mod_timer(&timer, jiffies + msecs_to_jiffies(timer_period)); 
 
@@ -63,7 +63,7 @@ module_init(timer_initialize);
 
 static void __exit timer_exit(void)
 {
-	del_timer_sync(&timer);
+	del_timer(&timer);
         kobject_put(timer_kobject);
 }
 
