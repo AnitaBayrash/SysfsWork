@@ -10,7 +10,7 @@ MODULE_AUTHOR("Anita Bayrash <anitikki@gmail.com>");
 MODULE_DESCRIPTION("Timer Module");
 
 static struct kobject *timer_kobject;
-
+static struct timer_list timer;
 int timer_period = 0;
 
 static ssize_t timer_show(struct kobject *kobj, struct kobj_attribute *attr, char *buffer)
@@ -22,6 +22,12 @@ static ssize_t timer_store(struct kobject *kobj, struct kobj_attribute *attr, co
 {
         sscanf(buffer, "%d", &timer_period);
 	return count;
+}
+
+void timer_callback(unsigned long argument)
+{
+	printk(KERN_INFO "Hello, world!\n");
+    	mod_timer(&timer, jiffies + msecs_to_jiffies(timer_period)); 
 }
 
 static struct kobj_attribute timer_attribute = __ATTR(timer_period, 0666, timer_show, timer_store);
@@ -42,6 +48,7 @@ static int __init timer_initialize(void)
 	return_value = sysfs_create_group(timer_kobject, &attribute_timer_group);
 	if (return_value)
 	       kobject_put(timer_kobject);
+	setup_timer(&timer, timer_callback, 0);
 	return return_value;
 }
 
@@ -49,6 +56,7 @@ module_init(timer_initialize);
 
 static void __exit timer_exit(void)
 {
+	del_timer_sync(&timer);
 	kobject_put(timer_kobject);
 }
 
